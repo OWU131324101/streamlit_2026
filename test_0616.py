@@ -23,6 +23,14 @@ name = st.text_input(
     placeholder="例: スタバ",
 )
 
+st.subheader("給与設定")
+hourly_wage = st.number_input(
+    label="時給を入力してください（円）",
+    min_value=0,
+    value=1100,  # 初期値
+    step=10,
+)
+
 with st.form("cafe_order"):
     date = st.date_input(
         label="日付を入力してください", value=datetime.now(), help="カレンダーから日付を選択"
