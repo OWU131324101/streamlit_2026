@@ -38,27 +38,22 @@ with st.form("cafe_order"):
 
     submitted = st.form_submit_button("登録する")
     if submitted:
-        # 開始時刻と終了時刻から労働時間を計算（時間単位）
         dt1 = datetime.combine(date, time1)
         dt2 = datetime.combine(date, time2)
 
-        # 日またぎシフト（例：23時〜翌2時）の簡易対応
         if dt2 < dt1:
             st.error("終了時刻は開始時刻より後の時間を設定してください。")
         else:
             duration = dt2 - dt1
-            hours = duration.total_seconds() / 3600  # 秒を時間に変換
+            hours = duration.total_seconds() / 3600
 
-            # 給与の計算
-            pay = int(hours * hourly_wage)
-
+            # 登録時は「金額」ではなく「労働時間」だけを保存する（時給変更に対応するため）
             st.session_state.shifts.append(
                 {
                     "日付": date,
                     "開始": time1,
                     "終了": time2,
                     "労働時間(h)": round(hours, 2),
-                    "見込み給与(円)": pay,
                 }
             )
             st.success("シフトを登録しました")
@@ -68,8 +63,11 @@ if name:
     st.subheader(f"{name}の予定表")
 
 if st.session_state.shifts:
-    # 1. データをデータフレームに変換
+    # データをデータフレームに変換
     df = pd.DataFrame(st.session_state.shifts)
+
+    # 時給が変わってもリアルタイムに計算できるように修正
+    df["見込み給与(円)"] = (df["労働時間(h)"] * hourly_wage).astype(int)
 
     # サイドバーに合計金額を表示
     total_pay = df["見込み給与(円)"].sum()
@@ -86,34 +84,41 @@ if st.session_state.shifts:
         lambda x: f"{x:,}"
     )
 
-    # 表として表示
-    st.dataframe(df_display, use_container_width=True)
+    # 1. 削除用のチェックボックス付きテーブルを表示（行選択機能）
+    st.write("削除したいシフトにチェックを入れて、下の削除ボタンを押してください。")
+    edited_df = st.data_editor(
+        df_display,
+        num_rows="fixed",
+        use_container_width=True,
+        disabled=["日付", "開始", "終了", "労働時間(h)", "見込み給与(円)"],  # 文字は編集不可にする
+    )
 
-    # 2. 削除機能
-    st.write("---")
-    st.subheader("シフトの削除")
-
+    # 2. 削除ボタンの処理
+    # data_editorでユーザーが行を選択・削除したイベントを取得
     col1, col2 = st.columns()
-
     with col1:
-        delete_index = st.selectbox(
-            "削除する行の番号を選択してください",
-            options=df_display.index,
-            format_func=lambda x: f"行 {x}: {df_display.loc[x, '日付']} ({df_display.loc[x, '開始']}～)",
-        )
+        # Streamlitの標準のごみ箱マークや行選択を使って消す、またはシンプルに全クリア
+        if st.button("選択したシフトを削除", type="primary"):
+            # 画面上で消されていない（残っている）行のインデックスだけを抽出して元データを更新
+            remaining_indices = edited_df.index
+            # 編集中のテーブルで行が削除されたかチェック
+            if len(edited_df) < len(df_display):
+                # 残ったデータだけをセッション状態に上書き保存
+                st.session_state.shifts = [
+                    st.session_state.shifts[i] for i in edited_df.index
+                ]
+                st.success("指定したシフトを削除しました")
+                st.rerun()
+            else:
+                st.warning(
+                    "表の左端の番号をクリックしてキーボードの「Delete」キーを押すか、行を削除してからボタンを押してください。"
+                )
 
     with col2:
-        st.write("")
-        st.write("")
-        if st.button("選択したシフトを削除", type="primary"):
-            st.session_state.shifts.pop(delete_index)
-            st.success("指定したシフトを削除しました")
+        if st.button("すべてのシフトをクリア"):
+            st.session_state.shifts.clear()
+            st.success("すべてのシフトをクリアしました")
             st.rerun()
-
-    if st.button("すべてのシフトをクリア"):
-        st.session_state.shifts.clear()
-        st.success("すべてのシフトをクリアしました")
-        st.rerun()
 
 else:
     st.info("登録されたシフトはまだありません。")
