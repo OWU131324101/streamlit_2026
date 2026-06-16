@@ -14,6 +14,13 @@ name = st.text_input(
     placeholder="例: スタバ"
 )
 
+money = st.int_input(
+    label = "時給を入力してください",
+    value = "",
+    help="あなたが働いているアルバイト先の時給",
+    placeholder="例: 1200"
+)
+
 with st.form("cafe_order"):
     date = st.date_input(
         label = "日付を入力してください",
@@ -46,26 +53,21 @@ with st.form("cafe_order"):
 
 
 if st.session_state.shifts:
-    # 1. データをデータフレームに変換
     df = pd.DataFrame(st.session_state.shifts)
 
-    # 表示形式を整える
     df_display = df.copy()
     df_display["日付"] = df_display["日付"].apply(lambda x: x.strftime("%Y/%m/%d"))
     df_display["開始"] = df_display["開始"].apply(lambda x: x.strftime("%H:%M"))
     df_display["終了"] = df_display["終了"].apply(lambda x: x.strftime("%H:%M"))
 
-    # 表として表示
     st.dataframe(df_display, use_container_width=True)
-
-    # 2. 削除機能の追加
-    st.write("---")  # 区切り線
+    
+    st.write("---")
     st.subheader("シフトの削除")
 
     col1, col2 = st.columns([2, 1])
 
     with col1:
-        # 削除したい行の番号（インデックス）を選択する
         delete_index = st.selectbox(
             "削除する行の番号を選択してください",
             options=df_display.index,
@@ -73,16 +75,13 @@ if st.session_state.shifts:
         )
 
     with col2:
-        # 縦位置を合わせるためのスペース
         st.write("")
         st.write("")
-        # 選択した行を削除するボタン
         if st.button("選択したシフトを削除", type="primary"):
             st.session_state.shifts.pop(delete_index)
             st.success("指定したシフトを削除しました")
-            st.rerun()  # 画面を更新
+            st.rerun() 
 
-    # 3. 全削除ボタン（おまけ）
     if st.button("すべてのシフトをクリア"):
         st.session_state.shifts.clear()
         st.success("すべてのシフトをクリアしました")
