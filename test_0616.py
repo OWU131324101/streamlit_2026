@@ -84,41 +84,34 @@ if st.session_state.shifts:
         lambda x: f"{x:,}"
     )
 
-    # 1. 削除用のチェックボックス付きテーブルを表示（行選択機能）
-    st.write("削除したいシフトにチェックを入れて、下の削除ボタンを押してください。")
-    edited_df = st.data_editor(
-        df_display,
-        num_rows="fixed",
-        use_container_width=True,
-        disabled=["日付", "開始", "終了", "労働時間(h)", "見込み給与(円)"],  # 文字は編集不可にする
-    )
+    st.write("---")  # 区切り線
+    st.subheader("シフトの削除")
 
-    # 2. 削除ボタンの処理
-    # data_editorでユーザーが行を選択・削除したイベントを取得
-    col1, col2 = st.columns()
+    col1, col2 = st.columns([2, 1])
+
     with col1:
-        # Streamlitの標準のごみ箱マークや行選択を使って消す、またはシンプルに全クリア
-        if st.button("選択したシフトを削除", type="primary"):
-            # 画面上で消されていない（残っている）行のインデックスだけを抽出して元データを更新
-            remaining_indices = edited_df.index
-            # 編集中のテーブルで行が削除されたかチェック
-            if len(edited_df) < len(df_display):
-                # 残ったデータだけをセッション状態に上書き保存
-                st.session_state.shifts = [
-                    st.session_state.shifts[i] for i in edited_df.index
-                ]
-                st.success("指定したシフトを削除しました")
-                st.rerun()
-            else:
-                st.warning(
-                    "表の左端の番号をクリックしてキーボードの「Delete」キーを押すか、行を削除してからボタンを押してください。"
-                )
+        # 削除したい行の番号（インデックス）を選択する
+        delete_index = st.selectbox(
+            "削除する行の番号を選択してください",
+            options=df_display.index,
+            format_func=lambda x: f"行 {x}: {df_display.loc[x, '日付']} ({df_display.loc[x, '開始']}～)",
+        )
 
     with col2:
-        if st.button("すべてのシフトをクリア"):
-            st.session_state.shifts.clear()
-            st.success("すべてのシフトをクリアしました")
-            st.rerun()
+        # 縦位置を合わせるためのスペース
+        st.write("")
+        st.write("")
+        # 選択した行を削除するボタン
+        if st.button("選択したシフトを削除", type="primary"):
+            st.session_state.shifts.pop(delete_index)
+            st.success("指定したシフトを削除しました")
+            st.rerun()  # 画面を更新
+
+    # 3. 全削除ボタン（おまけ）
+    if st.button("すべてのシフトをクリア"):
+        st.session_state.shifts.clear()
+        st.success("すべてのシフトをクリアしました")
+        st.rerun()
 
 else:
     st.info("登録されたシフトはまだありません。")
