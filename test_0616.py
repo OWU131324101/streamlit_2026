@@ -7,6 +7,7 @@ st.header("アルバイトシフト管理システム")
 if "shifts" not in st.session_state:
     st.session_state.shifts = []
 
+# サイドバーに時給設定と給与合計を表示する
 st.sidebar.header("給与設定")
 hourly_wage = st.sidebar.number_input(
     label="時給を入力してください（円）",
@@ -16,34 +17,27 @@ hourly_wage = st.sidebar.number_input(
 )
 
 name = st.text_input(
-    label = "アルバイト先を入力してください",
-    value = "",
+    label="アルバイト先を入力してください",
+    value="",
     help="あなたが働いているアルバイト先の名前を入力してください",
-    placeholder="例: スタバ"
+    placeholder="例: スタバ",
 )
 
 with st.form("cafe_order"):
     date = st.date_input(
-        label = "日付を入力してください",
-        value = datetime.now(),
-        help = "カレンダーから日付を選択"
+        label="日付を入力してください", value=datetime.now(), help="カレンダーから日付を選択"
     )
 
     time1 = st.time_input(
-        label = "開始時刻",
-        value = time(12,0),
-        help = "アルバイト開始時刻を選択"
+        label="開始時刻", value=time(12, 0), help="アルバイト開始時刻を選択"
     )
 
     time2 = st.time_input(
-        label = "終了時刻",
-        value = time(12,0),
-        help = "アルバイト終了時刻を選択"
+        label="終了時刻", value=time(12, 0), help="アルバイト終了時刻を選択"
     )
 
-
     submitted = st.form_submit_button("登録する")
-     if submitted:
+    if submitted:
         # 開始時刻と終了時刻から労働時間を計算（時間単位）
         dt1 = datetime.combine(date, time1)
         dt2 = datetime.combine(date, time2)
@@ -70,21 +64,36 @@ with st.form("cafe_order"):
             st.success("シフトを登録しました")
             st.rerun()
 
+if name:
+    st.subheader(f"{name}の予定表")
 
 if st.session_state.shifts:
+    # 1. データをデータフレームに変換
     df = pd.DataFrame(st.session_state.shifts)
 
+    # サイドバーに合計金額を表示
+    total_pay = df["見込み給与(円)"].sum()
+    total_hours = df["労働時間(h)"].sum()
+    st.sidebar.metric(label="合計勤務時間", value=f"{total_hours:.1f} 時間")
+    st.sidebar.metric(label="合計見込み給与", value=f"{total_pay:,} 円")
+
+    # 表示形式を整える
     df_display = df.copy()
     df_display["日付"] = df_display["日付"].apply(lambda x: x.strftime("%Y/%m/%d"))
     df_display["開始"] = df_display["開始"].apply(lambda x: x.strftime("%H:%M"))
     df_display["終了"] = df_display["終了"].apply(lambda x: x.strftime("%H:%M"))
+    df_display["見込み給与(円)"] = df_display["見込み給与(円)"].apply(
+        lambda x: f"{x:,}"
+    )
 
+    # 表として表示
     st.dataframe(df_display, use_container_width=True)
-    
+
+    # 2. 削除機能
     st.write("---")
     st.subheader("シフトの削除")
 
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns()
 
     with col1:
         delete_index = st.selectbox(
@@ -99,7 +108,7 @@ if st.session_state.shifts:
         if st.button("選択したシフトを削除", type="primary"):
             st.session_state.shifts.pop(delete_index)
             st.success("指定したシフトを削除しました")
-            st.rerun() 
+            st.rerun()
 
     if st.button("すべてのシフトをクリア"):
         st.session_state.shifts.clear()
@@ -108,4 +117,3 @@ if st.session_state.shifts:
 
 else:
     st.info("登録されたシフトはまだありません。")
-
