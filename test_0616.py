@@ -10,7 +10,7 @@ name = st.text_input(
     label = "アルバイト先を入力してください",
     value = "",
     help="あなたが働いているアルバイト先の名前を入力してください",
-    placeholder="例: すたば"
+    placeholder="例: スタバ"
 )
 
 with st.form("cafe_order"):
