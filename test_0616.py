@@ -53,3 +53,16 @@ for shift in st.session_state.shifts:
         f"{shift['日付']} "
         f"{shift['開始']} ～ {shift['終了']}"
     )
+
+if st.session_state.shifts:
+    import pandas as pd
+    
+    df = pd.DataFrame(st.session_state.shifts)
+    
+    df["日付"] = df["日付"].apply(lambda x: x.strftime("%Y/%m/%d"))
+    df["開始"] = df["開始"].apply(lambda x: x.strftime("%H:%M"))
+    df["終了"] = df["終了"].apply(lambda x: x.strftime("%H:%M"))
+    
+    st.dataframe(df, use_container_width=True)
+else:
+    st.info("登録されたシフトはまだありません。")
