@@ -44,16 +44,6 @@ with st.form("cafe_order"):
         st.success("シフトを登録しました")
 
 
-
-if name:
-    st.subheader(f"{name}の予定表")
-
-for shift in st.session_state.shifts:
-    st.write(
-        f"{shift['日付']} "
-        f"{shift['開始']} ～ {shift['終了']}"
-    )
-
 if st.session_state.shifts:
     import pandas as pd
     
@@ -66,3 +56,4 @@ if st.session_state.shifts:
     st.dataframe(df, use_container_width=True)
 else:
     st.info("登録されたシフトはまだありません。")
+
