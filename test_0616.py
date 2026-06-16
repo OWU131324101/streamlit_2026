@@ -68,6 +68,12 @@ if st.session_state.shifts:
     total_pay = df["見込み給与(円)"].sum()
     total_hours = df["労働時間(h)"].sum()
 
+    col_tot1, col_tot2 = st.columns(2)
+    with col_tot1:
+        st.metric(label="合計勤務時間", value=f"{total_hours:.1f} 時間")
+    with col_tot2:
+        st.metric(label="合計見込み給与", value=f"{total_pay:,} 円")
+
     df_display = df.copy()
     df_display["日付"] = df_display["日付"].apply(lambda x: x.strftime("%Y/%m/%d"))
     df_display["開始"] = df_display["開始"].apply(lambda x: x.strftime("%H:%M"))
