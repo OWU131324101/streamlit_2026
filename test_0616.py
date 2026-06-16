@@ -81,11 +81,17 @@ if st.session_state.shifts:
     df_display["見込み給与(円)"] = df_display["見込み給与(円)"].apply(
         lambda x: f"{x:,}"
     )
+    st.dataframe(df_display, use_container_width=True)
 
     st.write("---") 
     st.subheader("シフトの削除")
 
     col1, col2 = st.columns([2, 1])
+
+    delete_options = []
+    for idx in range(len(df_display)):
+        row = df_display.iloc[idx]
+        delete_options.append(f"行 {idx}: {row['日付']} ({row['開始']}～)")
 
     with col1:
         delete_index = st.selectbox(
